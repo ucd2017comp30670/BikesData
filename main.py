@@ -31,17 +31,16 @@ def fetch_data(url):
         r = requests.get(url)
     except requests.ConnectionError:
         logger.log(datetime.now, "Connection Error")
-    return r.json()
+    else:
+        return r.json()
 
 
 def store(data, database, collection):
     """Saves a list of dictionary objects in a mongoDB collection
     params  : data [dict], database (str), collection (str)
-    returns : pymongo.results.Insert_one_result
+    returns : pymongo.results.Insert_many_result
     """
-    mc = MongoClient()[database][collection]
-    r = mc.insert_many(data)
-    return r
+    return MongoClient()[database][collection].insert_many(data)
 
 
 def main():

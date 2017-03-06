@@ -22,8 +22,8 @@ class Logger:
             f.write("{} : {}\n".format(timestamp, message))
 
 
-def fetch_json(url):
-    """Returns a dictionary of JSON returned by a get request to a url
+def fetch_data(url):
+    """Returns a list of dicts returned by a get request to a url that returns JSON
     params  : url (str)
     returns : [dict]
     """
@@ -39,14 +39,14 @@ def store(data, database, collection):
     params  : data [dict], database (str), collection (str)
     returns : pymongo.results.Insert_one_result
     """
-    mc = MongoClient()[conf.DATABASE_NAME][conf.COLLECTION_NAME]
+    mc = MongoClient()[database][collection]
     r = mc.insert_many(data)
     return r
 
 
 def main():
     while True:
-        data = fetch_json(conf.URL + conf.API_KEY)
+        data = fetch_data(conf.URL + conf.API_KEY)
         if not data:
             logger.log(datetime.now(), "GET ERROR")
         else:
@@ -56,7 +56,9 @@ def main():
         time.sleep(60 * 5)
 
 if __name__ == "__main__":
-    if not conf.API_KEY or not conf.COLLECTION_NAME or not conf.DATABASE_NAME or not conf.LOG_FILE or not conf.URL:
-        raise SystemExit("Invalid Config")
+    for c in [conf.API_KEY, conf.URL, conf.DATABASE_NAME,
+              conf.COLLECTION_NAME, conf.LOG_FILE]:
+        if not c:
+            raise SystemExit("Invalid Config")
     logger = Logger(conf.LOG_FILE)
     main()

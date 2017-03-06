@@ -35,7 +35,7 @@ def fetch_json(url):
 
 
 def store(data, database, collection):
-    """Saves a python dictionary object in a mongoDB collection
+    """Saves a list of dictionary objects in a mongoDB collection
     params  : data [dict], database (str), collection (str)
     returns : pymongo.results.Insert_one_result
     """

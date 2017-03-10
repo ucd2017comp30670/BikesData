@@ -1,7 +1,8 @@
 from datetime import datetime
+import json
+
 import time
 
-from pymongo import MongoClient
 import requests
 
 import config as conf
@@ -35,23 +36,20 @@ def fetch_data(url):
         return r.json()
 
 
-def store(data, database, collection):
-    """Saves a list of dictionary objects in a mongoDB collection
-    params  : data [dict], database (str), collection (str)
-    returns : pymongo.results.Insert_many_result
-    """
-    return MongoClient()[database][collection].insert_many(data)
+def save(data, filename):
+    """"""
+    with open(filename, "at") as f:
+        json.dump(data, f)
 
 
 def main():
     while True:
         data = fetch_data(conf.URL + conf.API_KEY)
+        print(data)
         if not data:
             logger.log(datetime.now(), "GET ERROR")
         else:
-            id_ = store(data, conf.DATABASE_NAME, conf.COLLECTION_NAME)
-            if not id_:
-                logger.log(datetime.now(), "Error Writing {}".format(data))
+            save(data, conf.DATA_FILE)
         time.sleep(60 * 5)
 
 if __name__ == "__main__":

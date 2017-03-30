@@ -1,10 +1,11 @@
 from datetime import datetime
-import json
+from decimal import Decimal
 
 import time
 
 import requests
 import boto3
+
 import config as conf
 
 
@@ -36,58 +37,37 @@ def fetch_data(url):
         return r.json()
 
 
-def save(data):
-    """Saves data to dynamoDB"""
-    # initiate AWS service
-    dynamodb = boto3.resource('dynamodb')
-    # set the table for storing data
-    table = dynamodb.Table('DublinBikes')
-    # open json file
-    with open(data) as json_file:
-        bikes = json.load(json_file, parse_float=decimal.Decimal)
-        for obj in bikes:
-            name = obj["name"]
-            address = obj["address"]
-            lat = float(obj["position"]["lat"])
-            time_stamp = obj['last_update']
-            lna = float(obj["position"]["lng"])
-            free = int(obj['available_bikes'])
-            number = int(obj["number"])
-            bike_stands = int(obj["bike_stands"])
-            available_bike_stands = int(obj['available_bike_stands'])
-            print("Adding bike occupancy data:", name,
-                  "free bikes: ", free, "from", number)
+def store(table, data):
+    """Saves data to dynamoDB
+    params  : -
+    returns : -
+    """
+    ddb = boto3.resource("dynamodb")
+    t = ddb.Table(table)
+    with t.batch_writer() as batch:
+        for d in data:
+            del d["contract_name"]
+            del d["status"]
+            del d["bonus"]
 
-            table.put_item(
-                Item={
-                    'name': name,
-                    'id': id,
-                    'lat': lat,
-                    'timestamp': time_stamp,
-                    'lna': lna,
-                    'free': free,
-                    'number': number,
-                    "bike_stands": bike_stands,
-                    "available_bike_stands": available_bike_stands,
-                    "address": address
-                }
-            )
-    print("PutItem succeeded:")
+            d["position"]["lng"] = Decimal(str(d["position"]["lng"]))
+            d["position"]["lat"] = Decimal(str(d["position"]["lat"]))
+
+            batch.put_item(Item=d)
 
 
 def main():
     while True:
         data = fetch_data(conf.URL + conf.API_KEY)
-        print(data)
         if not data:
             logger.log(datetime.now(), "GET ERROR")
         else:
-            save(data, conf.DATA_FILE)
+            store(conf.TABLE_NAME, data)
         time.sleep(60 * 5)
 
+
 if __name__ == "__main__":
-    for c in [conf.API_KEY, conf.URL, conf.DATABASE_NAME,
-              conf.COLLECTION_NAME, conf.LOG_FILE]:
+    for c in [conf.API_KEY, conf.URL, conf.TABLE_NAME, conf.LOG_FILE]:
         if not c:
             raise SystemExit("Invalid Config")
     logger = Logger(conf.LOG_FILE)

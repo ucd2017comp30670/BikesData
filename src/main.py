@@ -52,7 +52,7 @@ def createTable(db):
     )
 
 
-def save(data):
+def save(data, count):
     """Saves data to dynamoDB, each location's attributes in specific time is saved as a new item in the table"""
 
     # connect to  AWS DB service
@@ -61,7 +61,6 @@ def save(data):
                                          aws_secret_access_key=conf.SECRET_KEY
                                          )
     db.use_decimals()
-    count = 0
 
     for obj in data:
         name = obj["name"]
@@ -74,6 +73,7 @@ def save(data):
         bike_stands = obj["bike_stands"]
         available_bike_stands = obj['available_bike_stands']
         count += 1
+
         item_data = {
             "name": name,
             "address": address,
@@ -99,17 +99,19 @@ def save(data):
         print("Adding bike occupancy data from:", name,
               "free bikes at the moment: ", free, "from", number)
 
-    print("Put Items succeeded:")
+    print("Put Items succeeded. Last update at:", datetime.fromtimestamp(int(
+        data[0]["last_update"]) / 1000).strftime('%Y.%m.%d %H:%M:%S'))
 
 
 def main():
     while True:
+        count = 0
         data = fetch_data(conf.URL + conf.API_KEY)
         print(data)
         if not data:
             logger.log(datetime.now(), "GET ERROR")
         else:
-            save(data)
+            save(data, count)
         time.sleep(60 * 5)
 
 if __name__ == "__main__":

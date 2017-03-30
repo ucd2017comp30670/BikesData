@@ -4,7 +4,7 @@ import json
 import time
 
 import requests
-
+import boto3
 import config as conf
 
 
@@ -36,10 +36,43 @@ def fetch_data(url):
         return r.json()
 
 
-def save(data, filename):
-    """"""
-    with open(filename, "at") as f:
-        json.dump(data, f)
+def save(data):
+    """Saves data to dynamoDB"""
+    # initiate AWS service
+    dynamodb = boto3.resource('dynamodb')
+    # set the table for storing data
+    table = dynamodb.Table('DublinBikes')
+    # open json file
+    with open(data) as json_file:
+        bikes = json.load(json_file, parse_float=decimal.Decimal)
+        for obj in bikes:
+            name = obj["name"]
+            address = obj["address"]
+            lat = float(obj["position"]["lat"])
+            time_stamp = obj['last_update']
+            lna = float(obj["position"]["lng"])
+            free = int(obj['available_bikes'])
+            number = int(obj["number"])
+            bike_stands = int(obj["bike_stands"])
+            available_bike_stands = int(obj['available_bike_stands'])
+            print("Adding bike occupancy data:", name,
+                  "free bikes: ", free, "from", number)
+
+            table.put_item(
+                Item={
+                    'name': name,
+                    'id': id,
+                    'lat': lat,
+                    'timestamp': time_stamp,
+                    'lna': lna,
+                    'free': free,
+                    'number': number,
+                    "bike_stands": bike_stands,
+                    "available_bike_stands": available_bike_stands,
+                    "address": address
+                }
+            )
+    print("PutItem succeeded:")
 
 
 def main():

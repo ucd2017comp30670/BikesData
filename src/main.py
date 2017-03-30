@@ -1,11 +1,9 @@
 from datetime import datetime
-import json
-
 import time
-
 import requests
-import boto3
+import boto.dynamodb
 import config as conf
+import decimal
 
 
 class Logger:
@@ -36,43 +34,72 @@ def fetch_data(url):
         return r.json()
 
 
-def save(data):
-    """Saves data to dynamoDB"""
-    # initiate AWS service
-    dynamodb = boto3.resource('dynamodb')
-    # set the table for storing data
-    table = dynamodb.Table('DublinBikes')
-    # open json file
-    with open(data) as json_file:
-        bikes = json.load(json_file, parse_float=decimal.Decimal)
-        for obj in bikes:
-            name = obj["name"]
-            address = obj["address"]
-            lat = float(obj["position"]["lat"])
-            time_stamp = obj['last_update']
-            lna = float(obj["position"]["lng"])
-            free = int(obj['available_bikes'])
-            number = int(obj["number"])
-            bike_stands = int(obj["bike_stands"])
-            available_bike_stands = int(obj['available_bike_stands'])
-            print("Adding bike occupancy data:", name,
-                  "free bikes: ", free, "from", number)
+def createTable(db):
+    "Function to create new table in dynamoDB"
+    # set the schema for table
+    DublinBikes_table_schema = db.create_schema(
+        hash_key_name='name',
+        hash_key_proto_value=str,
+        range_key_name='time_stamp',
+        range_key_proto_value=int
+    )
+    # create table
+    db.create_table(
+        name='DublinBikes',
+        schema=DublinBikes_table_schema,
+        read_units=25,
+        write_units=25
+    )
 
-            table.put_item(
-                Item={
-                    'name': name,
-                    'id': id,
-                    'lat': lat,
-                    'timestamp': time_stamp,
-                    'lna': lna,
-                    'free': free,
-                    'number': number,
-                    "bike_stands": bike_stands,
-                    "available_bike_stands": available_bike_stands,
-                    "address": address
-                }
-            )
-    print("PutItem succeeded:")
+
+def save(data):
+    """Saves data to dynamoDB, each location's attributes in specific time is saved as a new item in the table"""
+
+    # connect to  AWS DB service
+    db = boto.dynamodb.connect_to_region("eu-west-1",
+                                         aws_access_key_id=conf.ACESS_KEY,
+                                         aws_secret_access_key=conf.SECRET_KEY
+                                         )
+    db.use_decimals()
+    count = 0
+
+    for obj in data:
+        name = obj["name"]
+        address = obj["address"]
+        lat = decimal.Decimal(str(obj["position"]["lat"]))
+        time_stamp = obj['last_update']
+        lna = decimal.Decimal(str(obj["position"]["lng"]))
+        free = obj['available_bikes']
+        number = obj["number"]
+        bike_stands = obj["bike_stands"]
+        available_bike_stands = obj['available_bike_stands']
+        count += 1
+        item_data = {
+            "name": name,
+            "address": address,
+            "lat": lat,
+            "lna": lna,
+            "time_stamp": time_stamp,
+            "free": free,
+            "number": number,
+            "bike_stands": bike_stands,
+            "available_bike_stands": available_bike_stands,
+            "count": count
+        }
+        table = db.get_table('DublinBikes')
+        item = table.new_item(
+            # primary key
+            hash_key=name,
+            # range key
+            range_key=time_stamp,
+            # This has the
+            attrs=item_data
+        )
+        item.put()
+        print("Adding bike occupancy data from:", name,
+              "free bikes at the moment: ", free, "from", number)
+
+    print("Put Items succeeded:")
 
 
 def main():
@@ -82,7 +109,7 @@ def main():
         if not data:
             logger.log(datetime.now(), "GET ERROR")
         else:
-            save(data, conf.DATA_FILE)
+            save(data)
         time.sleep(60 * 5)
 
 if __name__ == "__main__":

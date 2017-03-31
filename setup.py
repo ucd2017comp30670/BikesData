@@ -14,5 +14,5 @@ setup(
     packages=["BikesData"],
     package_dir={"BikesData": "src"},
     install_requires=open("requirements.txt", "rt").readlines(),
-    entry_points={'console_scripts': ['bikes-data = BikesData.src.main:main']}
+    entry_points={'console_scripts': ['bikes-data = main:main']}
 )

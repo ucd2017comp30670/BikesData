@@ -67,7 +67,7 @@ def save(data, count):
         address = obj["address"]
         lat = decimal.Decimal(str(obj["position"]["lat"]))
         time_stamp = obj['last_update']
-        lna = decimal.Decimal(str(obj["position"]["lng"]))
+        lng = decimal.Decimal(str(obj["position"]["lng"]))
         free = obj['available_bikes']
         number = obj["number"]
         bike_stands = obj["bike_stands"]
@@ -78,7 +78,7 @@ def save(data, count):
             "name": name,
             "address": address,
             "lat": lat,
-            "lna": lna,
+            "lna": lng,
             "time_stamp": time_stamp,
             "free": free,
             "number": number,

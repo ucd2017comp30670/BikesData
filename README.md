@@ -2,7 +2,7 @@
 
 ## To install from github
 
-use pip install git+
+use pip install git+https://github.com/ucd2017comp30670/BikesData.git
 
 
 ## To Run from command line            

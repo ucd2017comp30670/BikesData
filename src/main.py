@@ -2,8 +2,12 @@ from datetime import datetime
 import time
 import requests
 import boto.dynamodb
-import config as conf
 import decimal
+
+try:
+    import config as conf
+except:
+    from . import config as conf
 
 
 class Logger:

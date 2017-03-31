@@ -92,7 +92,7 @@ def save(data, count):
             hash_key=name,
             # range key
             range_key=time_stamp,
-            # This has the
+            # attributes
             attrs=item_data
         )
         item.put()

@@ -13,7 +13,6 @@ setup(
     author="Team 12",
     keywords="Dublin bikes data getter",
     packages=["BikesData"],
-    package_dir={"BikesData": "src"},
     install_requires=open("requirements.txt", "rt").readlines(),
-    entry_points={'console_scripts': ['bikes-data = bikes-data.src.main:main']}
+    entry_points={'console_scripts': ['bikes-data = src.main:main']}
 )

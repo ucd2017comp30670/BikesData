@@ -1,3 +1,5 @@
 priv*
 DS_Store
 __pycache__
+.project
+.pydevproject
